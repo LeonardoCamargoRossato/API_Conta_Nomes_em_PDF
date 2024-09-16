@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload PDF</title>
+    <style>
+        /* Centralizar o conteúdo da página */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        /* Estilizar o formulário */
+        form {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+            border: 2px solid #cc5500; /* Borda laranja escuro */
+        }
+
+        /* Estilizar os títulos e labels */
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333333;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555555;
+        }
+
+        /* Estilizar os campos de entrada */
+        input[type="file"],
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            font-size: 16px;
+            color: #333333;
+            box-sizing: border-box;
+        }
+
+        /* Estilizar a área de texto para os nomes dos personagens */
+        textarea {
+            height: 120px;
+            resize: vertical; /* Permite que o usuário ajuste a altura se necessário */
+        }
+
+        /* Estilizar o botão de envio */
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #cc5500; /* Cor laranja escuro */
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #b34700; /* Cor laranja escuro mais escuro ao passar o mouse */
+        }
+    </style>
+</head>
+<body>
+    <form method="post" enctype="multipart/form-data">
+        <h1>Enviar PDF e Inserir Detalhes</h1>
+        
+        <label for="pdf">Selecione o PDF:</label>
+        <input type="file" id="pdf" name="pdf" accept=".pdf" required>
+        
+        <label for="nomes_personagens">Nomes dos Personagens (separados por vírgula):</label>
+        <textarea id="nomes_personagens" name="nomes_personagens" placeholder="Exemplo: Harry Potter, Hermione Granger, Ron Weasley" required></textarea>
+        
+        <label for="nome_arquivo_csv">Nome do Arquivo CSV:</label>
+        <input type="text" id="nome_arquivo_csv" name="nome_arquivo_csv" placeholder="Exemplo: resultados.csv" required>
+        
+        <button type="submit">Processar</button>
+    </form>
+</body>
+</html>
+
