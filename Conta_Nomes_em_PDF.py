@@ -1,18 +1,21 @@
 import os
 import glob
-import fitz
 import re
 import pandas as pd
 import copy
 
 # Função Específica: transforma em string o texto de um pdf grande
+import pdfplumber
+
 def buscar_legendas(pdf_path):
     legendas = []
-    with fitz.open(pdf_path) as pdf_documento:
-        for numero_pagina, pagina in enumerate(pdf_documento, start=1):
-            texto_pagina = pagina.get_text("text").replace('\n', ' ')
-            legendas.append((texto_pagina, numero_pagina))
+    with pdfplumber.open(pdf_path) as pdf_documento:
+        for numero_pagina, pagina in enumerate(pdf_documento.pages, start=1):
+            texto_pagina = pagina.extract_text()
+            if texto_pagina:  # Certifique-se de que o texto não seja None
+                legendas.append((texto_pagina.replace('\n', ' '), numero_pagina))
     return legendas
+
 
     
 # Função Independente: Pode ser usada em contextos diferentes
