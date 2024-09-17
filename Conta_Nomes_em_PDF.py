@@ -3,10 +3,9 @@ import glob
 import re
 import pandas as pd
 import copy
-
-# Função Específica: transforma em string o texto de um pdf grande
 import pdfplumber
 
+# Função Específica: transforma em string o texto de um pdf grande
 def buscar_legendas(pdf_path):
     legendas = []
     with pdfplumber.open(pdf_path) as pdf_documento:
@@ -17,14 +16,27 @@ def buscar_legendas(pdf_path):
     return legendas
 
 
-    
-# Função Independente: Pode ser usada em contextos diferentes
-def divide_nomes_personagens(nomes_personagens):
+
+# Função Auxiliar de divide_nomes_personagens
+def divide_as_partes_dos_nomes_compostos(nomes_personagens):
     partes_dos_nomes = [nome.split() for nome in nomes_personagens]; cont = 0
     for line in partes_dos_nomes:
         line.append(nomes_personagens[cont])
         cont += 1
     return partes_dos_nomes
+    
+# Função Independente: Pode ser usada em contextos diferentes
+def divide_nomes_personagens(nomes_personagens):
+    nomes_simples = []
+    nomes_compostos = []
+    
+    for nome in nomes_personagens:
+        if len(nome.split()) == 1:  # Verifica se o nome é simples (apenas uma palavra)
+            nomes_simples.append(nome)
+        else:  # Se o nome tiver mais de uma palavra, é um nome composto
+            nomes_compostos.append(nome)
+    
+    return nomes_simples, divide_as_partes_dos_nomes_compostos(nomes_compostos)
 
 ###############################################################################################
 
@@ -34,9 +46,9 @@ def procura_nome_no_texto(nome, texto_pagina):
     pattern = re.compile(r'\b' + re.escape(nome) + r'\b\W*')
     lista_posicao = []
     for match in pattern.finditer(texto_pagina):
-        # print(nome, match.group(), match.start())
+        # Adiciona a posição inicial da correspondência encontrada na lista
         lista_posicao.append(match.start())
-    return lista_posicao
+    return lista_posicao  # Adicionando o retorno da lista de posições
 
 # Detecta as posições dos nomes ao longo das páginas do texto
 def listar_posicoes_nomes_na_legenda(legendas, partes_dos_nomes):
@@ -70,28 +82,6 @@ def elimina_repeticoes_entre_duas_lst_e_gera_tres_lst_finais(lst_a, lst_b, lst_c
     
     return lst_a_final, lst_b_final, lst_c_final
 
-# Elimina_nomes_repetidos_da_lista_posicoes_bruto
-# def gera_lista_posicoes_final(lista_posicoes_bruto):
-#     lista_posicoes_bruto_final = copy.deepcopy(lista_posicoes_bruto)
-    
-#     for num_pag, lst_pag in lista_posicoes_bruto_final:
-#         for personagem, lst_personagem in lst_pag:
-            
-#             lst_das_lst_posicoes_aux = []; tamanho_nomes = []
-#             for nome, lst_posicoes in lst_personagem:
-#                 lst_das_lst_posicoes_aux.append(lst_posicoes) 
-#                 tamanho_nomes.append(len(nome)+1) # +1 pra add o caracter de espaço
-                
-#             lst_a, lst_b, lst_c = lst_das_lst_posicoes_aux
-#             lst_a_final, lst_b_final, lst_c_final = elimina_repeticoes_entre_duas_lst_e_gera_tres_lst_finais(lst_a, lst_b, lst_c,tamanho_nomes[0])    
-#             lst_das_lst_posicoes_aux_corrigida = [lst_a_final, lst_b_final, lst_c_final]
-            
-#             cont = 0
-#             for i in range(len(lst_personagem)):
-#                 lst_personagem[i] = (lst_personagem[i][0], lst_das_lst_posicoes_aux_corrigida[cont])
-#                 cont += 1
-                
-#     return lista_posicoes_bruto_final
 
 def gera_lista_posicoes_final(lista_posicoes_bruto):
     lista_posicoes_bruto_final = copy.deepcopy(lista_posicoes_bruto)
@@ -178,24 +168,6 @@ def conta_personagens_nome_sobrenome(lst_posicoes_simplificada, nomes_personagen
     
 ##############################################################################################
 
-
-def gerar_df_padrao_timeline_histograma(lst_contagem_nomes_final_simplificada, nomes_personagens):
-    personagens = {nome: {} for nome in nomes_personagens}
-    for item in lst_contagem_nomes_final_simplificada:
-        pagina, personagem, *valores = item
-        if personagem in personagens:
-            soma = sum(valores[-3:])  # Somente as três últimas colunas
-            personagens[personagem][pagina] = personagens[personagem].get(pagina, 0) + soma
-        else:
-            print(f"Nome desconhecido encontrado: {personagem}")
-    
-    # Cria DataFrame a partir do dicionário de personagens
-    df_personagens = pd.DataFrame.from_dict(personagens, orient='index').sort_index(axis=1)
-    
-    return df_personagens    
-
-##############################################################################################
-
 def gerar_df_padrao_timeline_histograma(lst_contagem_nomes_final_simplificada, nomes_personagens):
     personagens = {nome: {} for nome in nomes_personagens}
     for item in lst_contagem_nomes_final_simplificada:
@@ -214,44 +186,126 @@ def gerar_df_padrao_timeline_histograma(lst_contagem_nomes_final_simplificada, n
     
     return df_personagens
 
-def gerar_df_padrao_timeline_histograma(lst_contagem_nomes_final_simplificada, nomes_personagens):
-    personagens = {nome: {} for nome in nomes_personagens}
-    for item in lst_contagem_nomes_final_simplificada:
-        pagina, personagem, *valores = item
-        if personagem in personagens:
-            soma = sum(valores[-3:])  # Somente as três últimas colunas
-            personagens[personagem][pagina] = personagens[personagem].get(pagina, 0) + soma
-        else:
-            print(f"Nome desconhecido encontrado: {personagem}")
-    
-    # Cria DataFrame a partir do dicionário de personagens
-    df_personagens = pd.DataFrame.from_dict(personagens, orient='index').sort_index(axis=1)
-    
-    # Aplica soma acumulada ao longo das colunas
-    df_personagens = df_personagens.cumsum(axis=1)
-    
-    return df_personagens
+##############################################################################################  
 
-##############################################################################################
+def Conta_Nomes_Compostos_em_PDF_de_duas_palavras(legendas, nomes_compostos):
 
-def Conta_Nomes_em_pdf(nomes_personagens, pdf_path, nome_arquivo_csv):
-    print("Iniciando a contagem de nomes...")  # Debug
-    partes_dos_nomes = divide_nomes_personagens(nomes_personagens)
-    
-    # Usando o caminho do PDF específico
-    legendas = buscar_legendas(pdf_path)
-    
-    lista_posicoes_bruto = listar_posicoes_nomes_na_legenda(legendas, partes_dos_nomes)
+    # Lista para armazenar as posições dos nomes compostos encontrados
+    lista_posicoes_bruto = listar_posicoes_nomes_na_legenda(legendas, nomes_compostos)
     lista_posicoes_final = gera_lista_posicoes_final(lista_posicoes_bruto)
     lst_contagem_nomes_final = gera_lista_contagem_por_pag_dos_nomes_na_lista_posicoes(lista_posicoes_final)
     lst_contagem_nomes_final_simplificada = simplifica_estrutura(lst_contagem_nomes_final)
 
-    df_contagem_timeline_histograma = gerar_df_padrao_timeline_histograma(lst_contagem_nomes_final_simplificada, nomes_personagens)
+    # Corrigir para usar nomes compostos (strings) ao invés de partes dos nomes
+    nomes = [item[-1] for item in nomes_compostos]    	
+    df_contagem_timeline_histograma = gerar_df_padrao_timeline_histograma(lst_contagem_nomes_final_simplificada, nomes)
+    return df_contagem_timeline_histograma
     
-    if not df_contagem_timeline_histograma.empty:
-        df_contagem_timeline_histograma.to_csv(nome_arquivo_csv, index=True)
-        print(f"DataFrame salvo como {nome_arquivo_csv}")
+##############################################################################################    
+
+
+def Conta_Nomes_Simples_em_PDF(legendas, nomes_simples):
+    """
+    Função principal para contar nomes simples em um PDF e gerar um DataFrame.
+
+    Args:
+    - legendas: Lista de tuplas contendo o texto de cada página e o número da página.
+    - nomes_simples: Lista de nomes simples.
+
+    Returns:
+    - pd.DataFrame: DataFrame de linha do tempo com contagens acumuladas de nomes simples.
+    """
+
+    def buscar_ocorrencias_nomes_simples(legendas, nomes_simples):
+        """
+        Busca as ocorrências de nomes simples em cada página do PDF.
+        
+        Args:
+        - legendas: Lista de tuplas contendo o texto de cada página e o número da página.
+        - nomes_simples: Lista de nomes simples (uma palavra).
+    
+        Returns:
+        - dict: Um dicionário com os nomes simples e suas contagens por página.
+        """
+        ocorrencias = {nome: {} for nome in nomes_simples}  # Dicionário para armazenar contagens
+    
+        for texto_pagina, numero_pagina in legendas:
+            for nome in nomes_simples:
+                # Conta o número de ocorrências do nome simples na página
+                contagem = len(re.findall(r'\b' + re.escape(nome) + r'\b', texto_pagina, re.IGNORECASE))
+                # Atualiza o dicionário de ocorrências
+                if numero_pagina not in ocorrencias[nome]:
+                    ocorrencias[nome][numero_pagina] = contagem
+                else:
+                    ocorrencias[nome][numero_pagina] += contagem
+    
+        return ocorrencias
+
+    def gerar_df_timeline_nomes_simples(ocorrencias, nomes_simples):
+        """
+        Gera um DataFrame de linha do tempo para contagens de nomes simples.
+    
+        Args:
+        - ocorrencias: Dicionário com as contagens de nomes simples por página.
+        - nomes_simples: Lista de nomes simples.
+    
+        Returns:
+        - pd.DataFrame: DataFrame com contagens acumuladas por página para cada nome simples.
+        """
+        # Inicializa um dicionário para criar o DataFrame
+        dados_df = {nome: {} for nome in nomes_simples}
+        
+        for nome, contagens in ocorrencias.items():
+            # Converte contagens em uma série acumulada para cada nome
+            paginas = sorted(contagens.keys())
+            acumulado = 0
+            for pagina in paginas:
+                acumulado += contagens[pagina]
+                dados_df[nome][pagina] = acumulado
+        
+        # Converte o dicionário em um DataFrame e preenche valores ausentes com zero
+        df_nomes_simples = pd.DataFrame.from_dict(dados_df, orient='index').sort_index(axis=1).fillna(0)
+        
+        return df_nomes_simples
+    
+    # Busca as ocorrências de nomes simples
+    ocorrencias = buscar_ocorrencias_nomes_simples(legendas, nomes_simples)
+    
+    # Gera o DataFrame a partir das ocorrências
+    df_nomes_simples = gerar_df_timeline_nomes_simples(ocorrencias, nomes_simples)
+    
+    return df_nomes_simples    
+    
+##############################################################################################
+    
+def Conta_Nomes_em_pdf(nomes_personagens, pdf_path, nome_arquivo_csv):
+    print("Iniciando a contagem de nomes...")  # Debug
+    
+    # Extrai as legendas do PDF
+    legendas = buscar_legendas(pdf_path)
+    
+    # Divide os nomes entre simples e compostos
+    nomes_simples, nomes_compostos_duas_palavras = divide_nomes_personagens(nomes_personagens)
+    
+    # Conta nomes simples
+    df_contagem_timeline_histograma_nomes_simples = Conta_Nomes_Simples_em_PDF(legendas, nomes_simples)
+    
+    # Conta nomes compostos (se houver)
+    if nomes_compostos_duas_palavras:
+        df_contagem_timeline_histograma_nomes_compostos_duas_palavras = Conta_Nomes_Compostos_em_PDF_de_duas_palavras(legendas, nomes_compostos_duas_palavras)
+        
+        # Concatenar DataFrames de nomes simples e compostos
+        df_final_contagem_timeline_histogramas = pd.concat(
+            [df_contagem_timeline_histograma_nomes_simples, df_contagem_timeline_histograma_nomes_compostos_duas_palavras], 
+            axis=0
+        )
     else:
-        print("DataFrame está vazio. Nenhum nome foi contado.")
+        # Se não houver nomes compostos, use apenas o DataFrame de nomes simples
+        df_final_contagem_timeline_histogramas = df_contagem_timeline_histograma_nomes_simples
+    
+    # Exportar o DataFrame final para CSV
+    df_final_contagem_timeline_histogramas.to_csv(nome_arquivo_csv, index=True)
+    print(f"DataFrame salvo como {nome_arquivo_csv}")
+
 
 
