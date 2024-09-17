@@ -6,15 +6,12 @@ import pandas as pd
 import copy
 
 # Função Específica: transforma em string o texto de um pdf grande
-def buscar_legendas():
-    base_path = os.getcwd()
-    arquivos_pdf = glob.glob(os.path.join(base_path, '*.pdf'))
+def buscar_legendas(pdf_path):
     legendas = []
-    for arquivo in arquivos_pdf:
-        with fitz.open(arquivo) as pdf_documento:
-            for numero_pagina, pagina in enumerate(pdf_documento, start=1):
-                texto_pagina = pagina.get_text("text").replace('\n', ' ')
-                legendas.append((texto_pagina, numero_pagina))
+    with fitz.open(pdf_path) as pdf_documento:
+        for numero_pagina, pagina in enumerate(pdf_documento, start=1):
+            texto_pagina = pagina.get_text("text").replace('\n', ' ')
+            legendas.append((texto_pagina, numero_pagina))
     return legendas
 
     
@@ -234,48 +231,24 @@ def gerar_df_padrao_timeline_histograma(lst_contagem_nomes_final_simplificada, n
 
 ##############################################################################################
 
-def Conta_Nomes_em_pdf(nomes_personagens, nome_arquivo_csv):
-    # nomes_personagens = ["Harry Potter", "Hermione Granger", "Rony Weasley", "Alvo Dumbledore", "Drago Malfoy"]
-    # nome_arquivo_csv = 'df_HarryPotter.csv'
-    
+def Conta_Nomes_em_pdf(nomes_personagens, pdf_path, nome_arquivo_csv):
+    print("Iniciando a contagem de nomes...")  # Debug
     partes_dos_nomes = divide_nomes_personagens(nomes_personagens)
-    legendas = buscar_legendas()
+    
+    # Usando o caminho do PDF específico
+    legendas = buscar_legendas(pdf_path)
+    
     lista_posicoes_bruto = listar_posicoes_nomes_na_legenda(legendas, partes_dos_nomes)
     lista_posicoes_final = gera_lista_posicoes_final(lista_posicoes_bruto)
-    
-    # lst_contagem_nomes_bruto = gera_lista_contagem_por_pag_dos_nomes_na_lista_posicoes(lista_posicoes_bruto)
     lst_contagem_nomes_final = gera_lista_contagem_por_pag_dos_nomes_na_lista_posicoes(lista_posicoes_final)
-    
-    # Após Simplificação da lista (Contagem Nomes por página):
-    # lst_contagem_nomes_bruto_simplificada = simplifica_estrutura(lst_contagem_nomes_bruto)
     lst_contagem_nomes_final_simplificada = simplifica_estrutura(lst_contagem_nomes_final)
 
-    # Contagem Final Total quero do Livro (somando nome + sobrenome + nome_completo):
-    # contagem_personagens_bruto = conta_personagens(lst_contagem_nomes_bruto_simplificada, nomes_personagens)
-    contagem_personagens_final = conta_personagens(lst_contagem_nomes_final_simplificada, nomes_personagens)
-    
-    # Contagem Final Total do Livro (diferenciando nome | sobrenome | nome completo):
-    # contagem_nomes_bruto = conta_personagens_nome_sobrenome(lst_contagem_nomes_bruto_simplificada, nomes_personagens)
-    contagem_nomes_final = conta_personagens_nome_sobrenome(lst_contagem_nomes_final_simplificada, nomes_personagens)
-    
-    # print('Contagem Final Total do Livro (somando nome + sobrenome + nome_completo)')
-    # display('Bruto',contagem_personagens_bruto);
-    # display('Final',contagem_personagens_final);
-
-    # print('\n Contagem Final Total do Livro (diferenciando nome | sobrenome | nome completo)')
-    # display('Bruto',contagem_nomes_bruto);
-    # display('Final',contagem_nomes_final);
-
     df_contagem_timeline_histograma = gerar_df_padrao_timeline_histograma(lst_contagem_nomes_final_simplificada, nomes_personagens)
-    # df_contagem_timeline_histograma.to_csv('df_HarryPotter.csv', index=True)
-
-    # print('df_contagem_timeline_histograma:')
-    # display(df_contagem_timeline_histograma)
-
-    # df_contagem_timeline_histograma = gerar_df_padrao_timeline_histograma(lst_contagem_nomes_final_simplificada, nomes_personagens)
-    # print('df_contagem_timeline_histograma:')
-    # display(df_contagem_timeline_histograma)
     
-    # Salvando / exportando em CSV
-    df_contagem_timeline_histograma.to_csv(nome_arquivo_csv, index=True)
+    if not df_contagem_timeline_histograma.empty:
+        df_contagem_timeline_histograma.to_csv(nome_arquivo_csv, index=True)
+        print(f"DataFrame salvo como {nome_arquivo_csv}")
+    else:
+        print("DataFrame está vazio. Nenhum nome foi contado.")
+
 
